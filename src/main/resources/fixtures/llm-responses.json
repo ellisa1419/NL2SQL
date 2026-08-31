@@ -1,0 +1,46 @@
+{
+  "How many orders were placed in Q3 2025?": {
+    "latencyMs": 620,
+    "sql": "SELECT COUNT(*) AS order_count FROM orders WHERE order_date >= '2025-07-01' AND order_date < '2025-10-01'"
+  },
+  "What was total revenue by region for Q3 2025, ranked highest to lowest?": {
+    "latencyMs": 1300,
+    "sql": "SELECT r.name AS region, ROUND(SUM(oi.quantity * oi.unit_price * (1 - oi.discount)), 2) AS revenue FROM orders o JOIN customers c ON c.id = o.customer_id JOIN regions r ON r.id = c.region_id JOIN order_items oi ON oi.order_id = o.id WHERE o.status = 'completed' AND o.order_date >= '2025-07-01' AND o.order_date < '2025-10-01' GROUP BY r.name ORDER BY revenue DESC"
+  },
+  "Which products had no sales in 2025?": {
+    "latencyMs": 980,
+    "repairLatencyMs": 810,
+    "sql": "SELECT p.id, p.name, p.category FROM products p WHERE NOT EXISTS ( SELECT 1 FROM order_items oi JOIN orders o ON o.id = oi.order_id WHERE oi.product_id = p.id AND o.order_date LIKE '2025%'",
+    "repairedSql": "SELECT p.id, p.name, p.category FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi JOIN orders o ON o.id = oi.order_id WHERE oi.product_id = p.id AND o.order_date LIKE '2025%')"
+  },
+  "Show me average order value by customer segment": {
+    "latencyMs": 890,
+    "repairLatencyMs": 830,
+    "sql": "SELECT c.segment, ROUND(AVG(o.total_amount), 2) AS avg_order_value FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.status = 'completed' GROUP BY c.segment ORDER BY avg_order_value DESC",
+    "repairedSql": "SELECT c.segment, ROUND(AVG(order_value), 2) AS avg_order_value FROM (SELECT o.id, o.customer_id, SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS order_value FROM orders o JOIN order_items oi ON oi.order_id = o.id WHERE o.status = 'completed' GROUP BY o.id, o.customer_id) v JOIN customers c ON c.id = v.customer_id GROUP BY c.segment ORDER BY avg_order_value DESC"
+  },
+  "List the top 5 customers by lifetime spend": {
+    "latencyMs": 1050,
+    "repairLatencyMs": 840,
+    "sql": "SELECT c.id, c.name, c.total_spend FROM customers c ORDER BY c.total_spend DESC LIMIT 5",
+    "repairedSql": "SELECT c.id, c.name, ROUND(SUM(oi.quantity * oi.unit_price * (1 - oi.discount)), 2) AS lifetime_spend FROM customers c JOIN orders o ON o.customer_id = c.id JOIN order_items oi ON oi.order_id = o.id WHERE o.status = 'completed' GROUP BY c.id, c.name ORDER BY lifetime_spend DESC LIMIT 5"
+  },
+  "What is the month over month revenue growth for 2025?": {
+    "latencyMs": 1210,
+    "repairLatencyMs": 870,
+    "sql": "SELECT DATE_TRUNC('month', o.order_date) AS month, SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS revenue FROM orders o JOIN order_items oi ON oi.order_id = o.id WHERE o.status = 'completed' GROUP BY 1 ORDER BY 1",
+    "repairedSql": "SELECT EXTRACT(MONTH FROM o.order_date) AS month, SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS revenue FROM orders o JOIN order_items oi ON oi.order_id = o.id WHERE o.status = 'completed' GROUP BY 1 ORDER BY 1"
+  },
+  "What percentage of orders included a discounted item?": {
+    "latencyMs": 760,
+    "sql": "SELECT ROUND(100.0 * SUM(CASE WHEN oi.discount > 0 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_discounted FROM order_items oi"
+  },
+  "Who are our top customers?": {
+    "latencyMs": 700,
+    "sql": "SELECT c.id, c.name, COUNT(o.id) AS order_count FROM customers c JOIN orders o ON o.customer_id = c.id GROUP BY c.id, c.name ORDER BY order_count DESC LIMIT 10"
+  },
+  "For each product, what share of its category's revenue does it represent?": {
+    "latencyMs": 900,
+    "sql": "SELECT p.id, p.name, p.category, ROUND(SUM(oi.quantity * oi.unit_price * (1 - oi.discount)), 2) AS product_revenue, (SELECT ROUND(SUM(oi2.quantity * oi2.unit_price * (1 - oi2.discount)), 2) FROM order_items oi2 JOIN products p2 ON p2.id = oi2.product_id WHERE p2.category = p.category) AS category_revenue FROM products p JOIN order_items oi ON oi.product_id = p.id GROUP BY p.id, p.name, p.category ORDER BY product_revenue DESC"
+  }
+}
