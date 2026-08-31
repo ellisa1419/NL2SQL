@@ -5,8 +5,6 @@ import com.acme.nl2sql.llm.LlmClient;
 import com.acme.nl2sql.metrics.PipelineMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
@@ -18,7 +16,6 @@ import java.util.Map;
  *
  * No validation, no retry, no fallback, no cache.
  */
-@Component
 public class QueryPipeline {
 
     private static final Logger log = LoggerFactory.getLogger(QueryPipeline.class);
@@ -28,8 +25,7 @@ public class QueryPipeline {
     private final PipelineMetrics metrics;
     private final long slaMs;
 
-    public QueryPipeline(LlmClient llm, SqlExecutor executor, PipelineMetrics metrics,
-                         @Value("${engine.sla-ms:1500}") long slaMs) {
+    public QueryPipeline(LlmClient llm, SqlExecutor executor, PipelineMetrics metrics, long slaMs) {
         this.llm = llm;
         this.executor = executor;
         this.metrics = metrics;

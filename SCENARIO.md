@@ -20,7 +20,7 @@ Design the production execution engine. You have the running system to poke at.
 
 ## Running it
 
-    mvn spring-boot:run
+    ./run.sh
 
 First start seeds `data/analytics.db` (a few seconds). Then:
 

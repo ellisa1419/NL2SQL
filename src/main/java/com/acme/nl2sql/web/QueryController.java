@@ -3,12 +3,13 @@ package com.acme.nl2sql.web;
 import com.acme.nl2sql.metrics.PipelineMetrics;
 import com.acme.nl2sql.pipeline.QueryPipeline;
 import com.acme.nl2sql.pipeline.QueryResult;
-import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@RestController
+/**
+ * Shapes the HTTP payloads for the query endpoints. Transport lives in {@link HttpApi}.
+ */
 public class QueryController {
 
     private final QueryPipeline pipeline;
@@ -19,8 +20,13 @@ public class QueryController {
         this.metrics = metrics;
     }
 
-    @PostMapping("/v1/query")
-    public Map<String, Object> query(@RequestBody Map<String, String> body) {
+    /**
+     * Answers a natural-language question.
+     *
+     * @param body decoded request body, expected to carry a {@code question} field
+     * @return the response body for {@code POST /v1/query}
+     */
+    public Map<String, Object> query(Map<String, String> body) {
         QueryResult r = pipeline.answer(body.get("question"));
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("question", r.question());
@@ -33,18 +39,26 @@ public class QueryController {
         return out;
     }
 
-    @GetMapping("/v1/metrics")
+    /**
+     * @return the response body for {@code GET /v1/metrics}
+     */
     public Map<String, Object> metrics() {
         return metrics.snapshot();
     }
 
-    @PostMapping("/v1/metrics/reset")
+    /**
+     * Clears the collected metrics.
+     *
+     * @return the response body for {@code POST /v1/metrics/reset}
+     */
     public Map<String, Object> reset() {
         metrics.reset();
         return Map.of("reset", true);
     }
 
-    @GetMapping("/v1/schema")
+    /**
+     * @return the response body for {@code GET /v1/schema}
+     */
     public String schema() {
         return SchemaDoc.TEXT;
     }

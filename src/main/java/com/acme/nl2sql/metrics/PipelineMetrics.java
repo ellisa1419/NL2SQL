@@ -1,14 +1,12 @@
 package com.acme.nl2sql.metrics;
 
 import com.acme.nl2sql.pipeline.QueryResult;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@Component
 public class PipelineMetrics {
 
     private final List<QueryResult> results = new ArrayList<>();

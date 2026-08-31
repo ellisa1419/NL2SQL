@@ -4,9 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Component;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -20,17 +19,20 @@ import java.util.concurrent.ThreadLocalRandom;
  * costs what a real generation costs. Its outputs are what we observed in production
  * for these questions.
  */
-@Component
 public class StubLlmClient implements LlmClient {
 
     private static final Logger log = LoggerFactory.getLogger(StubLlmClient.class);
 
+    private static final String FIXTURES = "fixtures/llm-responses.json";
+
     private final Map<String, JsonNode> fixtures = new HashMap<>();
 
     public StubLlmClient() {
-        try {
-            ObjectMapper om = new ObjectMapper();
-            JsonNode root = om.readTree(new ClassPathResource("fixtures/llm-responses.json").getInputStream());
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream(FIXTURES)) {
+            if (in == null) {
+                throw new IllegalStateException("missing classpath resource: " + FIXTURES);
+            }
+            JsonNode root = new ObjectMapper().readTree(in);
             root.fields().forEachRemaining(e -> fixtures.put(normalize(e.getKey()), e.getValue()));
         } catch (Exception e) {
             throw new IllegalStateException("could not load llm fixtures", e);
